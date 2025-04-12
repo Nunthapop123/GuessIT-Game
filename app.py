@@ -101,6 +101,7 @@ class Shop:
 class GameManager:
     def __init__(self):
         self.word = Word()
+        self.game_result = ""
         self.guesses = [[]] * 6
         self.current_guess = []
         self.current_guess_letter = ""
@@ -136,22 +137,47 @@ class GameManager:
 
     def handle_guesses(self):
         guess_str = ''.join([letter.text for letter in self.current_guess]).lower()
-
         if guess_str in WORDS:
             result = self.word.check_guess(self.current_guess)
+            self.game_result = result
             self.guesses_count += 1
             self.current_guess = []
             self.current_guess_letter = ""
             self.current_letter_bg_x = 432
             if result == "W":
                 print("You Win!")
-            elif self.guesses_count == 6:
+            elif self.guesses_count == 6 and result == "":
+                self.game_result = "L"
                 print(f"You Lose! The word was: {self.word.correct_word.upper()}")
         else:
             print(f"'{guess_str.upper()}' is not a valid word!")
 
+    def play_again(self):
+        pg.draw.rect(SCREEN, "white", (10, 800, 1000, 800))
+        play_again_font = LETTER_FONT
+        play_again_text = play_again_font.render("Press ENTER to Play Again!", True, "black")
+        play_again_rect = play_again_text.get_rect(center=(WIDTH / 2, 900))
+        corrected_word_text = play_again_font.render(f"The word was {self.word.correct_word}!", True, "black")
+        corrected_word_rect = corrected_word_text.get_rect(center=(WIDTH / 2, 850))
+        SCREEN.blit(corrected_word_text, corrected_word_rect)
+        SCREEN.blit(play_again_text, play_again_rect)
+        pg.display.update()
+
+    def reset(self):
+        SCREEN.fill("white")
+        SCREEN.blit(BACKGROUND, BACKGROUND_RECT)
+        self.game_result = ""
+        self.guesses = [[]] * 6
+        self.current_guess = []
+        self.current_guess_letter = ""
+        self.guesses_count = 0
+        self.word = Word()
+        pg.display.update()
+
     def game_loop(self):
         while self.running:
+            if self.game_result != "":
+                self.play_again()
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.running = False
@@ -162,8 +188,11 @@ class GameManager:
                         if len(self.current_guess_letter) > 0:
                             self.delete_letter()
                     elif event.key == pg.K_RETURN:
-                        if len(self.current_guess_letter) == 5:
-                            self.handle_guesses()
+                        if self.game_result != "":
+                            self.reset()
+                        else:
+                            if len(self.current_guess_letter) == 5:
+                                self.handle_guesses()
                     else:
                         key_pressed = event.unicode.upper()
                         if key_pressed in "QWERTYUIOPASDFGHJKLZXCVBNM" and key_pressed != "":
