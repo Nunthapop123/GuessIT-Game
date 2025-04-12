@@ -1,6 +1,7 @@
 import pygame as pg
 import sys
 import random
+from words import *
 
 pg.init()
 
@@ -12,6 +13,8 @@ BACKGROUND_RECT = BACKGROUND.get_rect(center=(640, 450))
 
 OUTLINE = "#d3d6da"
 FILLED_OUTLINE = "#878a8c"
+GREEN = "#D3E671"
+YELLOW = "#F8ED8C"
 
 LETTER_FONT = pg.font.Font("assets/PressStart2P-vaV7.ttf", 40)
 LETTER_X_SPACING = 85
@@ -47,7 +50,40 @@ class Letter:
 
 
 class Word:
-    pass
+    def __init__(self):
+        self.correct_word = self.generate_new_word()
+
+    def check_guess(self, guess_word):
+        correct = list(self.correct_word)
+        game_decided = False
+        game_result = ""
+
+        for i in range(5):
+            letter_obj = guess_word[i]
+            lowercase_letter = letter_obj.text.lower()
+
+            if lowercase_letter == correct[i]:
+                letter_obj.bg_color = GREEN
+                letter_obj.text_color = "white"
+                if not game_decided:
+                    game_result = "W"
+            elif lowercase_letter in correct:
+                letter_obj.bg_color = YELLOW
+                letter_obj.text_color = "white"
+                game_result = ""
+                game_decided = True
+            else:
+                letter_obj.bg_color = "grey"
+                letter_obj.text_color = "white"
+                game_result = ""
+                game_decided = True
+
+            letter_obj.draw()
+
+        return game_result
+
+    def generate_new_word(self):
+        return random.choice(WORDS)
 
 
 class Player:
@@ -64,6 +100,7 @@ class Shop:
 
 class GameManager:
     def __init__(self):
+        self.word = Word()
         self.guesses = [[]] * 6
         self.current_guess = []
         self.current_guess_letter = ""
@@ -97,6 +134,17 @@ class GameManager:
         self.current_guess_letter = self.current_guess_letter[:-1]
         self.current_letter_bg_x -= LETTER_X_SPACING
 
+    def handle_guesses(self):
+        result = self.word.check_guess(self.current_guess)
+        self.guesses_count += 1
+        self.current_guess = []
+        self.current_guess_letter = ""
+        self.current_letter_bg_x = 432
+        if result == "W":
+            print("You Win!")
+        elif self.guesses_count == 6:
+            print("You Lose!")
+
     def game_loop(self):
         while self.running:
             for event in pg.event.get():
@@ -108,6 +156,9 @@ class GameManager:
                     if event.key == pg.K_BACKSPACE:
                         if len(self.current_guess_letter) > 0:
                             self.delete_letter()
+                    elif event.key == pg.K_RETURN:
+                        if len(self.current_guess_letter) == 5:
+                            self.handle_guesses()
                     else:
                         key_pressed = event.unicode.upper()
                         if key_pressed in "QWERTYUIOPASDFGHJKLZXCVBNM" and key_pressed != "":
