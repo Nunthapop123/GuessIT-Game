@@ -34,6 +34,7 @@ current_guess = []
 current_guess_letter = ""
 current_letter_bg_x = 432
 
+
 class Letter:
     def __init__(self, text, bg_position):
         self.bg_color = "white"
@@ -73,6 +74,14 @@ def create_new_letter():
             letter.draw()
 
 
+def delete_letter():
+    global current_guess_letter, current_letter_bg_x
+    guesses[guesses_count][-1].delete()
+    guesses[guesses_count].pop()
+    current_guess_letter = current_guess_letter[:-1]
+    current_guess.pop()
+    current_letter_bg_x -= LETTER_X_SPACING
+
 
 while True:
     for event in pg.event.get():
@@ -84,6 +93,9 @@ while True:
             if key_pressed in "QWERTYUIOPASDFGHJKLZXCVBNM" and key_pressed != "":
                 if len(current_guess_letter) < 5:
                     create_new_letter()
+            if event.key == pg.K_BACKSPACE:
+                if len(current_guess_letter) > 0:
+                    delete_letter()
 
 
 class Word:
