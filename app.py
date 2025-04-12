@@ -135,15 +135,20 @@ class GameManager:
         self.current_letter_bg_x -= LETTER_X_SPACING
 
     def handle_guesses(self):
-        result = self.word.check_guess(self.current_guess)
-        self.guesses_count += 1
-        self.current_guess = []
-        self.current_guess_letter = ""
-        self.current_letter_bg_x = 432
-        if result == "W":
-            print("You Win!")
-        elif self.guesses_count == 6:
-            print("You Lose!")
+        guess_str = ''.join([letter.text for letter in self.current_guess]).lower()
+
+        if guess_str in WORDS:
+            result = self.word.check_guess(self.current_guess)
+            self.guesses_count += 1
+            self.current_guess = []
+            self.current_guess_letter = ""
+            self.current_letter_bg_x = 432
+            if result == "W":
+                print("You Win!")
+            elif self.guesses_count == 6:
+                print(f"You Lose! The word was: {self.word.correct_word.upper()}")
+        else:
+            print(f"'{guess_str.upper()}' is not a valid word!")
 
     def game_loop(self):
         while self.running:
