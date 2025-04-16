@@ -92,7 +92,7 @@ class Player:
         self.score = 0
         self.level = 1
         self.attempts = 0
-        self.items = []
+        self.items = {"Bomb": 2}
         self.item_used = []
         self.correct_guess_count = 0
         self.total_guess = 0
@@ -109,7 +109,37 @@ class Player:
 
 
 class Item:
-    pass
+    def __init__(self, game_manager):
+        self.name = ""
+        self.effect = ""
+        self.game_manager = game_manager
+
+    def apply_effect(self):
+        pass
+
+    def get_item_details(self):
+        pass
+
+
+class Bomb(Item):
+    def __init__(self, game_manager):
+        super().__init__(game_manager)
+        self.name = "Bomb"
+        self.effect = "Restore the latest row of guesses"
+        self.status = ""
+
+    def apply_effect(self):
+        if self.game_manager.guesses_count > 0:
+            self.status = "T"
+            for letter in self.game_manager.guesses[self.game_manager.guesses_count - 1]:
+                letter.delete()
+
+            self.game_manager.guesses[self.game_manager.guesses_count - 1] = []
+            self.game_manager.guesses_count -= 1
+            print("Bomb used! Retry the last guesses!.")
+        else:
+            self.status = "F"
+            print("No guess to undo!")
 
 
 class Shop:
@@ -121,7 +151,7 @@ class GameManager:
         self.word = Word()
         self.player = Player()
         self.game_result = ""
-        self.guesses = [[]] * 6
+        self.guesses = [[] for i in range(6)]
         self.current_guess = []
         self.current_guess_letter = ""
         self.current_letter_bg_x = 432
@@ -152,11 +182,21 @@ class GameManager:
         correct_word_text2 = correct_word_font.render(f"{partial_correct_word.upper()}", True, "black")
         correct_word_text2_rect = correct_word_text2.get_rect(center=(WIDTH // 2, 900))
 
+        bomb_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 20)
+        bomb_text = bomb_font.render("Use Bomb", True, "white")
+        self.bomb_button_rect = pg.Rect(1000, 100, 200, 40)
+        pg.draw.rect(SCREEN, (200, 0, 0), self.bomb_button_rect, border_radius=10)
+        bomb_text_rect = bomb_text.get_rect(center=self.bomb_button_rect.center)
+        bomb_count_text = bomb_font.render(f"{self.player.items['Bomb']}", True, "black")
+        bomb_count_rect = bomb_count_text.get_rect(center=(1100, 180))
+
         SCREEN.blit(header, header_rect)
         SCREEN.blit(level_text, level_text_rect)
         SCREEN.blit(correct_word_text1, correct_word_text1_rect)
         SCREEN.blit(correct_word_text2, correct_word_text2_rect)
         SCREEN.blit(score_text, score_text_rect)
+        SCREEN.blit(bomb_text, bomb_text_rect)
+        SCREEN.blit(bomb_count_text, bomb_count_rect)
         pg.display.update()
 
     def create_new_letter(self, key_pressed):
@@ -229,6 +269,28 @@ class GameManager:
 
         return partial_correct_word
 
+    def update_bomb_count(self):
+        bomb_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 20)
+        pg.draw.rect(SCREEN, "white", pg.Rect(1050, 160, 100, 40))
+        bomb_count_text = bomb_font.render(f"{self.player.items['Bomb']}", True, "black")
+        bomb_count_rect = bomb_count_text.get_rect(center=(1100, 180))
+        SCREEN.blit(bomb_count_text, bomb_count_rect)
+        pg.display.update(bomb_count_rect)
+
+    def handle_bomb_button(self, pos):
+        if hasattr(self, 'bomb_button_rect') and self.bomb_button_rect.collidepoint(pos):
+            print("Bomb clicked!")
+
+            if self.player.items.get("Bomb", 0) > 0:
+                bomb = Bomb(self)
+                bomb.apply_effect()
+                if bomb.status == "T":
+                    self.player.items["Bomb"] -= 1
+                    self.update_bomb_count()
+                print(f"Bombs left: {self.player.items['Bomb']}")
+            else:
+                print("No bombs left!")
+
     def go_next_level(self):
         pg.draw.rect(SCREEN, "white", (10, 750, 1000, 800))
         next_level_text = LETTER_FONT.render("Press ENTER to Go Next Level!", True, "black")
@@ -288,6 +350,9 @@ class GameManager:
                         if key_pressed in "QWERTYUIOPASDFGHJKLZXCVBNM" and key_pressed != "":
                             if len(self.current_guess_letter) < 5:
                                 self.create_new_letter(key_pressed)
+                elif event.type == pg.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        self.handle_bomb_button(event.pos)
 
 
 if __name__ == '__main__':
