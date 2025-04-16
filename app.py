@@ -92,7 +92,7 @@ class Player:
         self.score = 0
         self.level = 1
         self.attempts = 0
-        self.items = {"Bomb": 2}
+        self.items = {"Bomb": 2, "Magnify": 4}
         self.item_used = []
         self.correct_guess_count = 0
         self.total_guess = 0
@@ -142,6 +142,36 @@ class Bomb(Item):
             print("No guess to undo!")
 
 
+class Magnifying_Glass(Item):
+    def __init__(self, game_manager):
+        super().__init__(game_manager)
+        self.name = "Magnifying Glass"
+        self.effect = "Reveal"
+        self.status = ""
+
+    def apply_effect(self):
+        correct_word = self.game_manager.word.correct_word
+        partial = list(self.game_manager.partial_correct_word)
+
+        unrevealed_display_indices = []
+        correct_index = 0
+        for i, char in enumerate(partial):
+            if char != ' ':
+                if char == '-':
+                    unrevealed_display_indices.append((i, correct_index))
+                correct_index += 1
+
+        if unrevealed_display_indices:
+            self.status = "T"
+            chosen_display_index, chosen_correct_index = random.choice(unrevealed_display_indices)
+            partial[chosen_display_index] = correct_word[chosen_correct_index]
+            self.game_manager.partial_correct_word = ''.join(partial)
+            self.game_manager.update_partial_word()
+        else:
+            self.status = "F"
+            print("All letters already revealed!")
+
+
 class Shop:
     pass
 
@@ -177,9 +207,9 @@ class GameManager:
         correct_word_text1 = correct_word_font.render("The correct word is:", True, "black")
         correct_word_text1_rect = correct_word_text1.get_rect(center=(WIDTH // 2, 800))
 
-        partial_correct_word = self.letter_reveal()
+        self.partial_correct_word = self.letter_reveal()
         print(self.word.correct_word)
-        correct_word_text2 = correct_word_font.render(f"{partial_correct_word.upper()}", True, "black")
+        correct_word_text2 = correct_word_font.render(f"{self.partial_correct_word.upper()}", True, "black")
         correct_word_text2_rect = correct_word_text2.get_rect(center=(WIDTH // 2, 900))
 
         bomb_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 20)
@@ -188,15 +218,29 @@ class GameManager:
         pg.draw.rect(SCREEN, (200, 0, 0), self.bomb_button_rect, border_radius=10)
         bomb_text_rect = bomb_text.get_rect(center=self.bomb_button_rect.center)
         bomb_count_text = bomb_font.render(f"{self.player.items['Bomb']}", True, "black")
-        bomb_count_rect = bomb_count_text.get_rect(center=(1100, 180))
+        bomb_count_rect = bomb_count_text.get_rect(center=(1100, 165))
+
+        mag_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 16)
+        mag_text = mag_font.render("Use Magnifying Glass", True, "white")
+        self.mag_button_rect = pg.Rect(900, 200, 350, 40)
+        pg.draw.rect(SCREEN, (0, 200, 0), self.mag_button_rect, border_radius=10)
+        mag_text_rect = mag_text.get_rect(center=self.mag_button_rect.center)
+        mag_count_text = mag_font.render(f"{self.player.items['Magnify']}", True, "black")
+        mag_count_rect = mag_count_text.get_rect(center=(1100, 265))
 
         SCREEN.blit(header, header_rect)
-        SCREEN.blit(level_text, level_text_rect)
+
         SCREEN.blit(correct_word_text1, correct_word_text1_rect)
         SCREEN.blit(correct_word_text2, correct_word_text2_rect)
+
         SCREEN.blit(score_text, score_text_rect)
+        SCREEN.blit(level_text, level_text_rect)
+
         SCREEN.blit(bomb_text, bomb_text_rect)
         SCREEN.blit(bomb_count_text, bomb_count_rect)
+
+        SCREEN.blit(mag_text, mag_text_rect)
+        SCREEN.blit(mag_count_text, mag_count_rect)
         pg.display.update()
 
     def create_new_letter(self, key_pressed):
@@ -271,11 +315,27 @@ class GameManager:
 
     def update_bomb_count(self):
         bomb_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 20)
-        pg.draw.rect(SCREEN, "white", pg.Rect(1050, 160, 100, 40))
+        pg.draw.rect(SCREEN, "white", pg.Rect(1050, 150, 200, 30))
         bomb_count_text = bomb_font.render(f"{self.player.items['Bomb']}", True, "black")
-        bomb_count_rect = bomb_count_text.get_rect(center=(1100, 180))
+        bomb_count_rect = bomb_count_text.get_rect(center=(1100, 165))
         SCREEN.blit(bomb_count_text, bomb_count_rect)
         pg.display.update(bomb_count_rect)
+
+    def update_mag_count(self):
+        mag_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 20)
+        pg.draw.rect(SCREEN, "white", pg.Rect(1050, 240, 100, 50))
+        mag_count_text = mag_font.render(f"{self.player.items['Magnify']}", True, "black")
+        mag_count_rect = mag_count_text.get_rect(center=(1100, 265))
+        SCREEN.blit(mag_count_text, mag_count_rect)
+        pg.display.update(mag_count_rect)
+
+    def update_partial_word(self):
+        correct_word_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 30)
+        pg.draw.rect(SCREEN, "white", pg.Rect(WIDTH // 2 - 200, 850, 400, 100))
+        updated_word_text = correct_word_font.render(self.partial_correct_word.upper(), True, "black")
+        updated_word_rect = updated_word_text.get_rect(center=(WIDTH // 2, 900))
+        SCREEN.blit(updated_word_text, updated_word_rect)
+        pg.display.update()
 
     def handle_bomb_button(self, pos):
         if hasattr(self, 'bomb_button_rect') and self.bomb_button_rect.collidepoint(pos):
@@ -290,6 +350,20 @@ class GameManager:
                 print(f"Bombs left: {self.player.items['Bomb']}")
             else:
                 print("No bombs left!")
+
+    def handle_mag_button(self, pos):
+        if hasattr(self, 'mag_button_rect') and self.mag_button_rect.collidepoint(pos):
+            print("Magnifying Glass clicked!")
+
+            if self.player.items.get("Magnify", 0) > 0:
+                mag = Magnifying_Glass(self)
+                mag.apply_effect()
+                if mag.status == "T":
+                    self.player.items["Magnify"] -= 1
+                    self.update_mag_count()
+                print(f"Magnifying Glass left: {self.player.items['Magnify']}")
+            else:
+                print("No Magnifying Glass left!")
 
     def go_next_level(self):
         pg.draw.rect(SCREEN, "white", (10, 750, 1000, 800))
@@ -353,6 +427,7 @@ class GameManager:
                 elif event.type == pg.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         self.handle_bomb_button(event.pos)
+                        self.handle_mag_button(event.pos)
 
 
 if __name__ == '__main__':
