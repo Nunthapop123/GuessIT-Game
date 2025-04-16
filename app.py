@@ -2,6 +2,7 @@ import pygame as pg
 import sys
 import random
 from words import *
+import random
 
 pg.init()
 
@@ -97,8 +98,8 @@ class Player:
         self.total_guess = 0
         self.level_score = 0
 
-    def update_score(self, point):
-        self.score += point
+    def update_score(self):
+        self.score += self.level_score
 
     def level_up(self):
         self.level += 1
@@ -146,7 +147,9 @@ class GameManager:
         correct_word_text1 = correct_word_font.render("The correct word is:", True, "black")
         correct_word_text1_rect = correct_word_text1.get_rect(center=(WIDTH // 2, 800))
 
-        correct_word_text2 = correct_word_font.render(f"{self.word.correct_word.upper()}", True, "black")
+        partial_correct_word = self.letter_reveal()
+        print(self.word.correct_word)
+        correct_word_text2 = correct_word_font.render(f"{partial_correct_word.upper()}", True, "black")
         correct_word_text2_rect = correct_word_text2.get_rect(center=(WIDTH // 2, 900))
 
         SCREEN.blit(header, header_rect)
@@ -191,12 +194,40 @@ class GameManager:
         else:
             print(f"'{guess_str.upper()}' is not a valid word!")
 
+    def letter_reveal(self):
+        correct_word = self.word.correct_word
+        appear_index = []
+        reveal_letter = []
+        number_reveal = 2
+
+        if self.player.level <= 5:
+            number_reveal = random.choice([2, 3])
+        elif 6 <= self.player.level <= 10:
+            number_reveal = random.choice([1,2])
+        elif 11 <= self.player.level <= 19:
+            number_reveal = 1
+        else:
+            number_reveal = 0
+        while len(appear_index) < number_reveal:
+            index = random.randint(0, len(correct_word) - 1)
+            if index not in appear_index:
+                print(correct_word[index])
+                appear_index.append(index)
+                reveal_letter.append(correct_word[index])
+
+        show_word = [letter if i in appear_index else "-" for i, letter in enumerate(correct_word)]
+        partial_correct_word = " ".join(show_word)
+
+        return partial_correct_word
+
     def go_next_level(self):
         pg.draw.rect(SCREEN, "white", (10, 750, 1000, 800))
         next_level_text = LETTER_FONT.render("Press ENTER to Go Next Level!", True, "black")
         next_level_rect = next_level_text.get_rect(center=(WIDTH / 2, 900))
+
         level_point_text = LETTER_FONT.render(f"Point +{self.player.level_score}!", True, "black")
         level_point_rect = level_point_text.get_rect(center=(WIDTH / 2, 850))
+
         SCREEN.blit(next_level_text, next_level_rect)
         SCREEN.blit(level_point_text, level_point_rect)
         pg.display.update()
