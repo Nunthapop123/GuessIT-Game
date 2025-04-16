@@ -187,12 +187,21 @@ class GameManager:
             self.current_letter_bg_x = 432
             if result == "W":
                 print("You Win!")
+                self.score_calculation()
+                self.player.update_score()
                 self.player.level_up()
             elif self.guesses_count == 6 and result == "":
                 self.game_result = "L"
                 print(f"You Lose! The word was: {self.word.correct_word.upper()}")
         else:
             print(f"'{guess_str.upper()}' is not a valid word!")
+
+    def score_calculation(self):
+        score_list = [60, 50, 40, 30, 20, 10]
+        self.player.level_score = 0
+        if self.guesses_count <= len(score_list):
+            self.player.level_score += score_list[self.guesses_count - 1]
+        return self.player.level_score
 
     def letter_reveal(self):
         correct_word = self.word.correct_word
@@ -203,7 +212,7 @@ class GameManager:
         if self.player.level <= 5:
             number_reveal = random.choice([2, 3])
         elif 6 <= self.player.level <= 10:
-            number_reveal = random.choice([1,2])
+            number_reveal = random.choice([1, 2])
         elif 11 <= self.player.level <= 19:
             number_reveal = 1
         else:
