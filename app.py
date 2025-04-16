@@ -2,7 +2,6 @@ import pygame as pg
 import sys
 import random
 from words import *
-import random
 
 pg.init()
 
