@@ -87,7 +87,24 @@ class Word:
 
 
 class Player:
-    pass
+    def __init__(self):
+        self.score = 0
+        self.level = 1
+        self.attempts = 0
+        self.items = []
+        self.item_used = []
+        self.correct_guess_count = 0
+        self.total_guess = 0
+        self.level_score = 0
+
+    def update_score(self, point):
+        self.score += point
+
+    def level_up(self):
+        self.level += 1
+
+    def use_power_up(self, item_name):
+        pass
 
 
 class Item:
@@ -101,6 +118,7 @@ class Shop:
 class GameManager:
     def __init__(self):
         self.word = Word()
+        self.player = Player()
         self.game_result = ""
         self.guesses = [[]] * 6
         self.current_guess = []
@@ -115,7 +133,27 @@ class GameManager:
         SCREEN.blit(BACKGROUND, BACKGROUND_RECT)
         header = LETTER_FONT.render("GuessIT!", True, "black")
         header_rect = header.get_rect(center=(WIDTH // 2, 100))
+
+        player_feature_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 20)
+
+        level_text = player_feature_font.render(f"Level: {self.player.level}", True, "black")
+        level_text_rect = level_text.get_rect(center=(1100, 50))
+
+        score_text = player_feature_font.render(f"Score: {self.player.score}", True, "black")
+        score_text_rect = score_text.get_rect(center=(150, 50))
+
+        correct_word_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 30)
+        correct_word_text1 = correct_word_font.render("The correct word is:", True, "black")
+        correct_word_text1_rect = correct_word_text1.get_rect(center=(WIDTH // 2, 800))
+
+        correct_word_text2 = correct_word_font.render(f"{self.word.correct_word.upper()}", True, "black")
+        correct_word_text2_rect = correct_word_text2.get_rect(center=(WIDTH // 2, 900))
+
         SCREEN.blit(header, header_rect)
+        SCREEN.blit(level_text, level_text_rect)
+        SCREEN.blit(correct_word_text1, correct_word_text1_rect)
+        SCREEN.blit(correct_word_text2, correct_word_text2_rect)
+        SCREEN.blit(score_text, score_text_rect)
         pg.display.update()
 
     def create_new_letter(self, key_pressed):
@@ -146,22 +184,33 @@ class GameManager:
             self.current_letter_bg_x = 432
             if result == "W":
                 print("You Win!")
+                self.player.level_up()
             elif self.guesses_count == 6 and result == "":
                 self.game_result = "L"
                 print(f"You Lose! The word was: {self.word.correct_word.upper()}")
         else:
             print(f"'{guess_str.upper()}' is not a valid word!")
 
-    def play_again(self):
-        pg.draw.rect(SCREEN, "white", (10, 800, 1000, 800))
-        play_again_font = LETTER_FONT
-        play_again_text = play_again_font.render("Press ENTER to Play Again!", True, "black")
-        play_again_rect = play_again_text.get_rect(center=(WIDTH / 2, 900))
-        corrected_word_text = play_again_font.render(f"The word was {self.word.correct_word}!", True, "black")
-        corrected_word_rect = corrected_word_text.get_rect(center=(WIDTH / 2, 850))
-        SCREEN.blit(corrected_word_text, corrected_word_rect)
-        SCREEN.blit(play_again_text, play_again_rect)
+    def go_next_level(self):
+        pg.draw.rect(SCREEN, "white", (10, 750, 1000, 800))
+        next_level_text = LETTER_FONT.render("Press ENTER to Go Next Level!", True, "black")
+        next_level_rect = next_level_text.get_rect(center=(WIDTH / 2, 900))
+        level_point_text = LETTER_FONT.render(f"Point +{self.player.level_score}!", True, "black")
+        level_point_rect = level_point_text.get_rect(center=(WIDTH / 2, 850))
+        SCREEN.blit(next_level_text, next_level_rect)
+        SCREEN.blit(level_point_text, level_point_rect)
         pg.display.update()
+
+    # def play_again(self):
+    #     pg.draw.rect(SCREEN, "white", (10, 800, 1000, 800))
+    #     play_again_font = LETTER_FONT
+    #     play_again_text = play_again_font.render("Press ENTER to Play Again!", True, "black")
+    #     play_again_rect = play_again_text.get_rect(center=(WIDTH / 2, 900))
+    #     corrected_word_text = play_again_font.render(f"The word was {self.word.correct_word}!", True, "black")
+    #     corrected_word_rect = corrected_word_text.get_rect(center=(WIDTH / 2, 850))
+    #     SCREEN.blit(corrected_word_text, corrected_word_rect)
+    #     SCREEN.blit(play_again_text, play_again_rect)
+    #     pg.display.update()
 
     def reset(self):
         SCREEN.fill("white")
@@ -177,7 +226,7 @@ class GameManager:
     def game_loop(self):
         while self.running:
             if self.game_result != "":
-                self.play_again()
+                self.go_next_level()
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.running = False
@@ -190,6 +239,7 @@ class GameManager:
                     elif event.key == pg.K_RETURN:
                         if self.game_result != "":
                             self.reset()
+                            self.starter_display()
                         else:
                             if len(self.current_guess_letter) == 5:
                                 self.handle_guesses()
