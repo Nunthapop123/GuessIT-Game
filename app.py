@@ -443,6 +443,9 @@ class GameManager:
                             if self.play_button_rect.collidepoint(event.pos):
                                 self.game_state = "play"
                                 self.starter_display()
+                            if self.exit_button_rect.collidepoint(event.pos):
+                                pg.quit()
+                                sys.exit()
                         else:
                             self.handle_bomb_button(event.pos)
                             self.handle_mag_button(event.pos)
