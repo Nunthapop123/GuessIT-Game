@@ -180,13 +180,43 @@ class GameManager:
         self.word = Word()
         self.player = Player()
         self.game_result = ""
+        self.game_state = "menu"
         self.guesses = [[] for i in range(6)]
         self.current_guess = []
         self.current_guess_letter = ""
         self.current_letter_bg_x = 432
         self.guesses_count = 0
         self.running = True
-        self.starter_display()
+        self.menu_display()
+
+    def menu_display(self):
+        SCREEN.fill("white")
+
+        title_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 65)
+        title = title_font.render("GuessIT!", True, "black")
+        title_rect = title.get_rect(center=(WIDTH // 2, 200))
+
+        play_text = LETTER_FONT.render("Play", True, "white")
+        self.play_button_rect = pg.Rect(WIDTH // 2 - 150, 460, 300, 70)
+        pg.draw.rect(SCREEN, (20, 200, 0), self.play_button_rect, border_radius=10)
+        play_text_rect = play_text.get_rect(center=self.play_button_rect.center)
+
+        stat_text = LETTER_FONT.render("Stats", True, "white")
+        self.stat_button_rect = pg.Rect(WIDTH // 2 - 150, 560, 300, 70)
+        pg.draw.rect(SCREEN, (200, 150, 20), self.stat_button_rect, border_radius=10)
+        stat_text_rect = stat_text.get_rect(center=self.stat_button_rect.center)
+
+        exit_text = LETTER_FONT.render("Exit", True, "white")
+        self.exit_button_rect = pg.Rect(WIDTH // 2 - 150, 660, 300, 70)
+        pg.draw.rect(SCREEN, (200, 0, 0), self.exit_button_rect, border_radius=10)
+        exit_text_rect = exit_text.get_rect(center=self.exit_button_rect.center)
+
+        SCREEN.blit(title, title_rect)
+        SCREEN.blit(play_text, play_text_rect)
+        SCREEN.blit(exit_text, exit_text_rect)
+        SCREEN.blit(stat_text, stat_text_rect)
+
+        pg.display.update()
 
     def starter_display(self):
         SCREEN.fill("white")
@@ -407,26 +437,32 @@ class GameManager:
                     self.running = False
                     pg.quit()
                     sys.exit()
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_BACKSPACE:
-                        if len(self.current_guess_letter) > 0:
-                            self.delete_letter()
-                    elif event.key == pg.K_RETURN:
-                        if self.game_result != "":
-                            self.reset()
-                            self.starter_display()
-                        else:
-                            if len(self.current_guess_letter) == 5:
-                                self.handle_guesses()
-                    else:
-                        key_pressed = event.unicode.upper()
-                        if key_pressed in "QWERTYUIOPASDFGHJKLZXCVBNM" and key_pressed != "":
-                            if len(self.current_guess_letter) < 5:
-                                self.create_new_letter(key_pressed)
-                elif event.type == pg.MOUSEBUTTONDOWN:
+                if event.type == pg.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        self.handle_bomb_button(event.pos)
-                        self.handle_mag_button(event.pos)
+                        if self.game_state == "menu":
+                            if self.play_button_rect.collidepoint(event.pos):
+                                self.game_state = "play"
+                                self.starter_display()
+                        else:
+                            self.handle_bomb_button(event.pos)
+                            self.handle_mag_button(event.pos)
+                if self.game_state == "play":
+                    if event.type == pg.KEYDOWN:
+                        if event.key == pg.K_BACKSPACE:
+                            if len(self.current_guess_letter) > 0:
+                                self.delete_letter()
+                        elif event.key == pg.K_RETURN:
+                            if self.game_result != "":
+                                self.reset()
+                                self.starter_display()
+                            else:
+                                if len(self.current_guess_letter) == 5:
+                                    self.handle_guesses()
+                        else:
+                            key_pressed = event.unicode.upper()
+                            if key_pressed in "QWERTYUIOPASDFGHJKLZXCVBNM" and key_pressed != "":
+                                if len(self.current_guess_letter) < 5:
+                                    self.create_new_letter(key_pressed)
 
 
 if __name__ == '__main__':
