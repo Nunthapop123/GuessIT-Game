@@ -436,6 +436,7 @@ class GameManager:
         self.guesses = [[]] * 6
         self.current_guess = []
         self.current_guess_letter = ""
+        self.current_letter_bg_x = 432
         self.guesses_count = 0
         self.word = Word()
         if new_game:
