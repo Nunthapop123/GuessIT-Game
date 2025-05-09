@@ -232,6 +232,11 @@ class GameManager:
         score_text = player_feature_font.render(f"Score: {self.player.score}", True, "black")
         score_text_rect = score_text.get_rect(center=(150, 50))
 
+        menu_text = player_feature_font.render("<< Menu", True, "white")
+        self.menu_button_rect = pg.Rect(50, 950, 150, 40)
+        pg.draw.rect(SCREEN, (200, 0, 0), self.menu_button_rect, border_radius=10)
+        menu_text_rect = menu_text.get_rect(center=self.menu_button_rect.center)
+
         correct_word_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 30)
         correct_word_text1 = correct_word_font.render("The correct word is:", True, "black")
         correct_word_text1_rect = correct_word_text1.get_rect(center=(WIDTH // 2, 800))
@@ -270,6 +275,8 @@ class GameManager:
 
         SCREEN.blit(mag_text, mag_text_rect)
         SCREEN.blit(mag_count_text, mag_count_rect)
+
+        SCREEN.blit(menu_text, menu_text_rect)
         pg.display.update()
 
     def create_new_letter(self, key_pressed):
@@ -394,6 +401,11 @@ class GameManager:
             else:
                 print("No Magnifying Glass left!")
 
+    def handle_menu_button(self, pos):
+        if self.menu_button_rect.collidepoint(pos):
+            self.game_state = "menu"
+            self.menu_display()
+
     def go_next_level(self):
         pg.draw.rect(SCREEN, "white", (10, 750, 1000, 800))
         next_level_text = LETTER_FONT.render("Press ENTER to Go Next Level!", True, "black")
@@ -417,7 +429,7 @@ class GameManager:
     #     SCREEN.blit(play_again_text, play_again_rect)
     #     pg.display.update()
 
-    def reset(self):
+    def reset(self, new_game=False):
         SCREEN.fill("white")
         SCREEN.blit(BACKGROUND, BACKGROUND_RECT)
         self.game_result = ""
@@ -426,6 +438,8 @@ class GameManager:
         self.current_guess_letter = ""
         self.guesses_count = 0
         self.word = Word()
+        if new_game:
+            self.player = Player()
         pg.display.update()
 
     def game_loop(self):
@@ -441,12 +455,14 @@ class GameManager:
                     if event.button == 1:
                         if self.game_state == "menu":
                             if self.play_button_rect.collidepoint(event.pos):
+                                self.reset(new_game=True)
                                 self.game_state = "play"
                                 self.starter_display()
                             if self.exit_button_rect.collidepoint(event.pos):
                                 pg.quit()
                                 sys.exit()
                         else:
+                            self.handle_menu_button(event.pos)
                             self.handle_bomb_button(event.pos)
                             self.handle_mag_button(event.pos)
                 if self.game_state == "play":
@@ -456,7 +472,7 @@ class GameManager:
                                 self.delete_letter()
                         elif event.key == pg.K_RETURN:
                             if self.game_result != "":
-                                self.reset()
+                                self.reset(new_game=False)
                                 self.starter_display()
                             else:
                                 if len(self.current_guess_letter) == 5:
