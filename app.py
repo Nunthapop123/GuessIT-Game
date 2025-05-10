@@ -433,7 +433,7 @@ class GameManager:
         SCREEN.fill("white")
         SCREEN.blit(BACKGROUND, BACKGROUND_RECT)
         self.game_result = ""
-        self.guesses = [[]] * 6
+        self.guesses = [[] for i in range(6)]
         self.current_guess = []
         self.current_guess_letter = ""
         self.current_letter_bg_x = 432
