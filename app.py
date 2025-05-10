@@ -2,6 +2,7 @@ import pygame as pg
 import sys
 import random
 from words import *
+from stats import GameStats
 
 pg.init()
 
@@ -92,9 +93,7 @@ class Player:
         self.level = 1
         self.attempts = 0
         self.items = {"Bomb": 2, "Magnify": 4}
-        self.item_used = []
-        self.correct_guess_count = 0
-        self.total_guess = 0
+        self.item_used = {"Bomb": 0, "Magnify": 0}
         self.level_score = 0
 
     def update_score(self):
@@ -300,10 +299,11 @@ class GameManager:
         self.current_guess = []
         self.current_guess_letter = ""
         self.current_letter_bg_x = 432
-        self.guesses_count = 0
+        self.player.attempts = 0
         self.shop = None
         self.game_over_displayed = False
         self.running = True
+        self.level_logs = []
         self.menu_display()
 
     def menu_display(self):
@@ -431,9 +431,9 @@ class GameManager:
 
     def create_new_letter(self, key_pressed):
         self.current_guess_letter += key_pressed
-        new_letter = Letter(key_pressed, (self.current_letter_bg_x, self.guesses_count * 100 + LETTER_Y_SPACING))
+        new_letter = Letter(key_pressed, (self.current_letter_bg_x, self.player.attempts * 100 + LETTER_Y_SPACING))
         self.current_letter_bg_x += LETTER_X_SPACING
-        self.guesses[self.guesses_count].append(new_letter)
+        self.guesses[self.player.attempts].append(new_letter)
         self.current_guess.append(new_letter)
         for guess in self.guesses:
             for letter in guess:
@@ -441,7 +441,7 @@ class GameManager:
 
     def delete_letter(self):
         self.current_guess[-1].delete()
-        self.guesses[self.guesses_count].pop()
+        self.guesses[self.player.attempts].pop()
         self.current_guess.pop()
         self.current_guess_letter = self.current_guess_letter[:-1]
         self.current_letter_bg_x -= LETTER_X_SPACING
@@ -451,7 +451,7 @@ class GameManager:
         if guess_str in WORDS:
             result = self.word.check_guess(self.current_guess)
             self.game_result = result
-            self.guesses_count += 1
+            self.player.attempts += 1
             self.current_guess = []
             self.current_guess_letter = ""
             self.current_letter_bg_x = 432
@@ -460,7 +460,7 @@ class GameManager:
                 self.score_calculation()
                 self.player.update_score()
                 self.player.level_up()
-            elif self.guesses_count == 6 and result == "":
+            elif self.player.attempts == 6 and result == "":
                 self.game_result = "L"
                 print(f"You Lose! The word was: {self.word.correct_word.upper()}")
         else:
@@ -470,8 +470,29 @@ class GameManager:
     def score_calculation(self):
         score_list = [60, 50, 40, 30, 20, 10]
         self.player.level_score = 0
-        if self.guesses_count <= len(score_list):
-            self.player.level_score += score_list[self.guesses_count - 1]
+        if self.player.attempts <= len(score_list):
+            self.player.level_score += score_list[self.player.attempts - 1]
+
+        correct_word = self.word.correct_word
+        total_letters = len(correct_word) * self.player.attempts
+        correct_letters = 0
+        for guess in self.guesses[:self.player.attempts]:
+            for i, letter in enumerate(guess):
+                if letter.text.lower() in correct_word:
+                    correct_letters += 1
+
+        if total_letters:
+            guess_accuracy = round(correct_letters / total_letters, 2)
+        else:
+            guess_accuracy = 0
+
+        self.level_logs.append({
+            "Level": self.player.level,
+            "Score": self.player.level_score,
+            "Attempts Used": self.player.attempts,
+            "Guess Accuracy": guess_accuracy
+        })
+
         return self.player.level_score
 
     def letter_reveal(self):
@@ -533,6 +554,7 @@ class GameManager:
                 bomb.apply_effect()
                 if bomb.status == "T":
                     self.player.items["Bomb"] -= 1
+                    self.player.item_used["Bomb"] += 1
                     self.update_bomb_count()
                 print(f"Bombs left: {self.player.items['Bomb']}")
             else:
@@ -547,6 +569,7 @@ class GameManager:
                 mag.apply_effect()
                 if mag.status == "T":
                     self.player.items["Magnify"] -= 1
+                    self.player.item_used["Magnify"] += 1
                     self.update_mag_count()
                 print(f"Magnifying Glass left: {self.player.items['Magnify']}")
             else:
@@ -630,7 +653,7 @@ class GameManager:
         self.current_guess = []
         self.current_guess_letter = ""
         self.current_letter_bg_x = 432
-        self.guesses_count = 0
+        self.player.attempts = 0
         self.word = Word()
         if new_game:
             self.player = Player()
@@ -642,6 +665,8 @@ class GameManager:
                 self.go_next_level()
             elif self.game_result == "L" and not self.game_over_displayed:
                 self.show_game_over()
+                logger = GameStats(self.level_logs, self.player, self.player.item_used)
+                logger.write_logs_to_csv()
                 self.game_over_displayed = True
             for event in pg.event.get():
                 if event.type == pg.QUIT:
