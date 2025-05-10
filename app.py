@@ -279,6 +279,39 @@ class GameManager:
         SCREEN.blit(menu_text, menu_text_rect)
         pg.display.update()
 
+    def show_invalid_word_overlay(self, word):
+        previous_screen = SCREEN.copy()
+
+        overlay = pg.Surface((WIDTH, HEIGHT), pg.SRCALPHA)
+        overlay.fill((255, 0, 0, 128))
+
+        font_main = pg.font.Font("assets/PressStart2P-vaV7.ttf", 30)
+        font_hint = pg.font.Font("assets/PressStart2P-vaV7.ttf", 18)
+
+        invalid_text = font_main.render(f"'{word.upper()}' is not a valid word!", True, "white")
+        invalid_text_rect = invalid_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 60))
+
+        hint = font_hint.render("Press any key to continue...", True, "white")
+        hint_rect = hint.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+
+        SCREEN.blit(overlay, (0, 0))
+        SCREEN.blit(invalid_text, invalid_text_rect)
+        SCREEN.blit(hint, hint_rect)
+        pg.display.update()
+
+        waiting = True
+        while waiting:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    self.running = False
+                    pg.quit()
+                    sys.exit()
+                elif event.type == pg.KEYDOWN:
+                    waiting = False
+            pg.time.delay(10)
+        SCREEN.blit(previous_screen, (0, 0))
+        pg.display.update()
+
     def create_new_letter(self, key_pressed):
         self.current_guess_letter += key_pressed
         new_letter = Letter(key_pressed, (self.current_letter_bg_x, self.guesses_count * 100 + LETTER_Y_SPACING))
@@ -315,6 +348,7 @@ class GameManager:
                 print(f"You Lose! The word was: {self.word.correct_word.upper()}")
         else:
             print(f"'{guess_str.upper()}' is not a valid word!")
+            self.show_invalid_word_overlay(guess_str)
 
     def score_calculation(self):
         score_list = [60, 50, 40, 30, 20, 10]
