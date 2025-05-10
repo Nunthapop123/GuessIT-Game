@@ -302,6 +302,7 @@ class GameManager:
         self.current_letter_bg_x = 432
         self.guesses_count = 0
         self.shop = None
+        self.game_over_displayed = False
         self.running = True
         self.menu_display()
 
@@ -574,6 +575,42 @@ class GameManager:
         SCREEN.blit(level_point_text, level_point_rect)
         pg.display.update()
 
+    def show_game_over(self):
+        previous_screen = SCREEN.copy()
+        overlay = pg.Surface((WIDTH, HEIGHT), pg.SRCALPHA)
+        overlay.fill((0, 0, 0, 128))
+        SCREEN.blit(previous_screen, (0, 0))
+        SCREEN.blit(overlay, (0, 0))
+
+        popup_rect = pg.Rect(WIDTH // 2 - 350, HEIGHT // 2 - 175, 700, 350)
+        pg.draw.rect(SCREEN, "white", popup_rect, border_radius=20)
+        pg.draw.rect(SCREEN, "black", popup_rect, 4, border_radius=20)
+
+        title_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 36)
+        text_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 20)
+
+        title_text = title_font.render("Game Over", True, "black")
+        title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 80))
+        SCREEN.blit(title_text, title_rect)
+
+        correct_word_text = text_font.render(f"The word was: {self.word.correct_word.upper()}", True, "black")
+        correct_word_rect = correct_word_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 20))
+        SCREEN.blit(correct_word_text, correct_word_rect)
+
+        score_text = text_font.render(f"Score: {self.player.score}", True, "black")
+        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
+        SCREEN.blit(score_text, score_rect)
+
+        level_text = text_font.render(f"Level Reached: {self.player.level}", True, "black")
+        level_rect = level_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 60))
+        SCREEN.blit(level_text, level_rect)
+
+        continue_text = text_font.render("Press ENTER to return to menu", True, "black")
+        continue_rect = continue_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 110))
+        SCREEN.blit(continue_text, continue_rect)
+
+        pg.display.update()
+
     # def play_again(self):
     #     pg.draw.rect(SCREEN, "white", (10, 800, 1000, 800))
     #     play_again_font = LETTER_FONT
@@ -601,8 +638,11 @@ class GameManager:
 
     def game_loop(self):
         while self.running:
-            if self.game_result != "":
+            if self.game_result == "W":
                 self.go_next_level()
+            elif self.game_result == "L" and not self.game_over_displayed:
+                self.show_game_over()
+                self.game_over_displayed = True
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.running = False
@@ -613,6 +653,7 @@ class GameManager:
                         if self.game_state == "menu":
                             if self.play_button_rect.collidepoint(event.pos):
                                 self.reset(new_game=True)
+                                self.game_over_displayed = False
                                 self.game_state = "play"
                                 self.starter_display()
                             if self.exit_button_rect.collidepoint(event.pos):
@@ -638,9 +679,15 @@ class GameManager:
                             if len(self.current_guess_letter) > 0:
                                 self.delete_letter()
                         elif event.key == pg.K_RETURN:
-                            if self.game_result != "":
+                            if self.game_result == "W":
+                                self.game_over_displayed = False
                                 self.reset(new_game=False)
                                 self.starter_display()
+                            elif self.game_result == "L":
+                                self.reset(new_game=True)
+                                self.menu_display()
+                                self.game_state = "menu"
+                                self.game_over_displayed = False
                             else:
                                 if len(self.current_guess_letter) == 5:
                                     self.handle_guesses()
