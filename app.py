@@ -3,6 +3,7 @@ import sys
 import random
 from words import *
 from stats import GameStats
+import subprocess
 
 pg.init()
 
@@ -131,13 +132,13 @@ class Bomb(Item):
         self.status = ""
 
     def apply_effect(self):
-        if self.game_manager.guesses_count > 0:
+        if self.game_manager.player.attempts > 0:
             self.status = "T"
-            for letter in self.game_manager.guesses[self.game_manager.guesses_count - 1]:
+            for letter in self.game_manager.guesses[self.game_manager.player.attempts - 1]:
                 letter.delete()
 
-            self.game_manager.guesses[self.game_manager.guesses_count - 1] = []
-            self.game_manager.guesses_count -= 1
+            self.game_manager.guesses[self.game_manager.player.attempts - 1] = []
+            self.game_manager.player.attempts -= 1
             print("Bomb used! Retry the last guesses!.")
         else:
             self.status = "F"
@@ -532,17 +533,17 @@ class GameManager:
 
     def update_bomb_count(self):
         bomb_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 20)
-        pg.draw.rect(SCREEN, "white", pg.Rect(1050, 150, 200, 30))
+        pg.draw.rect(SCREEN, "white", pg.Rect(1050, 250, 100, 30))
         bomb_count_text = bomb_font.render(f"{self.player.items['Bomb']}", True, "black")
-        bomb_count_rect = bomb_count_text.get_rect(center=(1100, 165))
+        bomb_count_rect = bomb_count_text.get_rect(center=(1100, 265))
         SCREEN.blit(bomb_count_text, bomb_count_rect)
         pg.display.update(bomb_count_rect)
 
     def update_mag_count(self):
         mag_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 20)
-        pg.draw.rect(SCREEN, "white", pg.Rect(1050, 240, 100, 50))
+        pg.draw.rect(SCREEN, "white", pg.Rect(1050, 450, 100, 50))
         mag_count_text = mag_font.render(f"{self.player.items['Magnify']}", True, "black")
-        mag_count_rect = mag_count_text.get_rect(center=(1100, 265))
+        mag_count_rect = mag_count_text.get_rect(center=(1100, 465))
         SCREEN.blit(mag_count_text, mag_count_rect)
         pg.display.update(mag_count_rect)
 
@@ -690,7 +691,9 @@ class GameManager:
                                 self.game_over_displayed = False
                                 self.game_state = "play"
                                 self.starter_display()
-                            if self.exit_button_rect.collidepoint(event.pos):
+                            elif self.stat_button_rect.collidepoint(event.pos):
+                                subprocess.Popen(["python", "visualize.py"])
+                            elif self.exit_button_rect.collidepoint(event.pos):
                                 pg.quit()
                                 sys.exit()
                         elif self.game_state == "shop":
