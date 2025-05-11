@@ -97,7 +97,7 @@ class Player:
         self.score = 0
         self.level = 1
         self.attempts = 0
-        self.items = {"Bomb": 2, "Magnify": 4}
+        self.items = {"Bomb": 2, "Magnify": 3}
         self.item_used = {"Bomb": 0, "Magnify": 0}
         self.level_score = 0
 
