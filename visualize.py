@@ -15,12 +15,12 @@ class StatsUI(ctk.CTk):
         self.title("Player Statistics")
         self.geometry("1366x1000")
 
-        if os.path.exists("game_log.csv"):
-            self.level_df = pd.read_csv("game_log.csv")
+        if os.path.exists("assets/data/game_log.csv"):
+            self.level_df = pd.read_csv("assets/data/game_log.csv")
         else:
             self.level_df = pd.DataFrame()
-        if os.path.exists("game_summary.csv"):
-            self.summary_df = pd.read_csv("game_summary.csv")
+        if os.path.exists("assets/data/game_summary.csv"):
+            self.summary_df = pd.read_csv("assets/data/game_summary.csv")
         else:
             self.summary_df = pd.DataFrame()
 
