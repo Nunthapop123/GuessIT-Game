@@ -22,6 +22,10 @@ LETTER_X_SPACING = 85
 LETTER_Y_SPACING = 162
 LETTER_SIZE = 75
 
+BOMB_ICON = pg.image.load("assets/bomb_icon.png")
+MAGNIFY_ICON = pg.image.load("assets/magnify_icon.png")
+BOMB_ICON = pg.transform.scale(BOMB_ICON, (105, 105))
+MAGNIFY_ICON = pg.transform.scale(MAGNIFY_ICON, (105, 105))
 
 class Letter:
     def __init__(self, text, bg_position):
@@ -205,10 +209,13 @@ class Shop:
             cost = self.items_available[item_name]
 
             item_text = item_font.render(f"{item_name} - {cost} pts", True, "black")
-            item_text_rect = item_text.get_rect(center=(start_x + i * gap_x, y_pos))
+            item_text_rect = item_text.get_rect(center=(start_x + i * gap_x, y_pos + 50))
             SCREEN.blit(item_text, item_text_rect)
-
-            buy_button = pg.Rect(start_x + i * gap_x - 75, y_pos + 40, 150, 40)
+            if item_name == "Bomb":
+                SCREEN.blit(BOMB_ICON, (item_text_rect.centerx - 55, y_pos - 60))
+            elif item_name == "Magnify":
+                SCREEN.blit(MAGNIFY_ICON, (item_text_rect.centerx - 35, y_pos - 60))
+            buy_button = pg.Rect(start_x + i * gap_x - 75, y_pos + 70, 150, 40)
             pg.draw.rect(SCREEN, (0, 150, 0), buy_button, border_radius=10)
             button_text = item_font.render("Buy", True, "white")
             button_rect = button_text.get_rect(center=buy_button.center)
@@ -365,19 +372,19 @@ class GameManager:
 
         bomb_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 20)
         bomb_text = bomb_font.render("Use Bomb", True, "white")
-        self.bomb_button_rect = pg.Rect(1000, 100, 200, 40)
+        self.bomb_button_rect = pg.Rect(1000, 200, 200, 40)
         pg.draw.rect(SCREEN, (200, 0, 0), self.bomb_button_rect, border_radius=10)
         bomb_text_rect = bomb_text.get_rect(center=self.bomb_button_rect.center)
         bomb_count_text = bomb_font.render(f"{self.player.items['Bomb']}", True, "black")
-        bomb_count_rect = bomb_count_text.get_rect(center=(1100, 165))
+        bomb_count_rect = bomb_count_text.get_rect(center=(1100, 265))
 
         mag_font = pg.font.Font("assets/PressStart2P-vaV7.ttf", 16)
         mag_text = mag_font.render("Use Magnifying Glass", True, "white")
-        self.mag_button_rect = pg.Rect(900, 200, 350, 40)
+        self.mag_button_rect = pg.Rect(900, 400, 350, 40)
         pg.draw.rect(SCREEN, (0, 200, 0), self.mag_button_rect, border_radius=10)
         mag_text_rect = mag_text.get_rect(center=self.mag_button_rect.center)
-        mag_count_text = mag_font.render(f"{self.player.items['Magnify']}", True, "black")
-        mag_count_rect = mag_count_text.get_rect(center=(1100, 265))
+        mag_count_text = bomb_font.render(f"{self.player.items['Magnify']}", True, "black")
+        mag_count_rect = mag_count_text.get_rect(center=(1100, 465))
 
         SCREEN.blit(header, header_rect)
 
@@ -387,9 +394,11 @@ class GameManager:
         SCREEN.blit(score_text, score_text_rect)
         SCREEN.blit(level_text, level_text_rect)
 
+        SCREEN.blit(BOMB_ICON, (self.bomb_button_rect.centerx - 55, self.bomb_button_rect.top - 105))
         SCREEN.blit(bomb_text, bomb_text_rect)
         SCREEN.blit(bomb_count_text, bomb_count_rect)
 
+        SCREEN.blit(MAGNIFY_ICON, (self.mag_button_rect.centerx - 45, self.mag_button_rect.top - 105))
         SCREEN.blit(mag_text, mag_text_rect)
         SCREEN.blit(mag_count_text, mag_count_rect)
 
