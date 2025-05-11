@@ -3,10 +3,11 @@
     ```shell 
     git clone https://github.com/Nunthapop123/GuessIT-Game.git
     ```
-2. Navigate to the project directory
+2. After Download/Clone Navigate to the project directory
    ```shell
    cd GuessIT-Game
    ```
+   
 3. Install the requirements.txt
    ```shell
    pip install -r requirements.txt
